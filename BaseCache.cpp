@@ -97,6 +97,7 @@ void BaseCache::sendMemReq(long long inAddr, int inSet, int inWay) {
   pkt.cnt = mMemLat;
   pkt.valid = 1;
   mActiveRld.push_front(pkt);
+  cout<<" Mem Req for Tag: 0x"<<hex<<pkt.tag<<dec<<endl;
 }
 
 void BaseCache::allocateLine(long long inTag, int inSet, int inWay) {
@@ -110,6 +111,7 @@ void BaseCache::processActiveReloads() {
     it->cnt--;
     if(it->cnt == 0) {
       allocateLine(it->tag, it->set, it->way);
+      cout<<" Cache Written Tag: 0x"<<hex<<it->tag<<dec<<endl;
       mActiveRld.pop_back();
     }
     it++;
