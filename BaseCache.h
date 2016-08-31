@@ -19,13 +19,13 @@ class BaseCache {
     void setHitLatency(int inLat)      { mHitLat = inLat; }
     void setMemLatency(int inLat)      { mMemLat = inLat; }
     void init_Cache();
-    void readAddr(long long inAddr);
-    void writeAddr(long long inAddr);
+    void readAddr(long long inAddr, long inCyc);
+    void writeAddr(long long inAddr, long inCyc);
     void updateLRU(int inSet, int inWay);
-    void allocateLine(long long inTag, int inSet, int inWay);
+    void allocateLine(long long inAddr, long long inTag, int inSet, int inWay, int inDirty);
     bool searchTag(long long inAddr, int &inSet, int &inWay);
-    void sendMemReq(long long inAddr, int inSet, int inWay);
-    void processActiveReloads();
+    void sendMemReq(long long inAddr, int inSet, int inWay, int inDirty, long inCyc);
+    void processActiveReloads(long inCyc);
     int  getWaytoAllocate(long long inAddr);
     int  getSet(long long inAddr);
     long long getTag(long long inAddr);
@@ -33,12 +33,15 @@ class BaseCache {
     int  getMisses() { return mMisses; }
     int  getTotalLatency() { return mLatency; }
     int  getHits() { return mHits; }
+    int  getReferences() { return mReferences; }
     struct reloadPkt {
       long long tag;
+      long long addr;
       int set;
       int way;
       int cnt;
-      int valid;
+      long cyc;
+      int dirty;
     };
   private:  
     CacheLine **mCache;
@@ -57,6 +60,7 @@ class BaseCache {
     int mMisses;
     int mHits;
     int mLatency;
+    int mReferences;
     deque<reloadPkt> mActiveRld;
 };
 

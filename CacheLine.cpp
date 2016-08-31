@@ -7,3 +7,9 @@ CacheLine::CacheLine() {
   mDirty=0;
   mValid=0;
 }
+
+void CacheLine::reset() {
+  mTag=0;  
+  mDirty=0;
+  mValid=0;
+}

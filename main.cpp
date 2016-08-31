@@ -14,7 +14,7 @@
 using namespace std;
 
 int main() {
-  ifstream inFile("sample_config.cfg");
+  ifstream inFile("sample_config_test.cfg");
   string line;
   BaseCache mCacheL1;
   while(getline(inFile, line)) {
@@ -35,32 +35,37 @@ int main() {
     }
   }
   mCacheL1.init_Cache();
-  ifstream inFile1("sample_trace.trc");
+  ifstream inFile1("sample_trace_test.trc");
   char *line_tr = NULL;
   while(getline(inFile1, line)) {
-    int cnt=0;
-    int cycle=0, r_w=0;
+    int cnt=0, r_w=0;
+    long cycle;
     long long addr;
     char *line_tr = &line[0];
     char *seg = NULL;
-    seg = strtok(line_tr, ",");
-    while(seg != NULL) {
-      string temp(seg);
-      istringstream convert(temp);
-      if(cnt == 0) convert>>cycle;
-      else if(cnt == 1) r_w = atoi(seg);
-      else if(cnt == 2) addr = strtol(seg, NULL, 16);
-      seg = strtok(NULL, ",");
-      cnt++;
-    }
-    if(r_w == 1) {
-      cout<<"Read Request for Addr:"<<hex<<addr<<dec<<endl; 
-      mCacheL1.readAddr(addr);
-    }
-    else {
-      cout<<"Write Request for Addr:"<<hex<<addr<<dec<<endl; 
-      mCacheL1.writeAddr(addr);
+    if(strlen(line_tr)>1) {
+      seg = strtok(line_tr, ",");
+      while(seg != NULL) {
+        string temp(seg);
+        istringstream convert(temp);
+        if(cnt == 0) cycle = strtol(seg, NULL, 16);
+        else if(cnt == 1) r_w = atoi(seg);
+        else if(cnt == 2) addr = strtol(seg, NULL, 16);
+        seg = strtok(NULL, ",");
+        cnt++;
+      }
+      mCacheL1.processActiveReloads(cycle);
+      if(r_w == 1) {
+        cout<<"Cyc:"<<hex<<cycle<<dec<<" Read Request for Addr:"<<hex<<addr<<dec<<endl; 
+        mCacheL1.readAddr(addr, cycle);
+      }
+      else {
+        cout<<"Cyc:"<<hex<<cycle<<dec<<" Write Request for Addr:"<<hex<<addr<<dec<<endl; 
+        mCacheL1.writeAddr(addr, cycle);
+      }
     }
   }
+  cout<<" Results "<<endl<<" Hits: "<<mCacheL1.getHits()<<endl<<" Misses: "<<mCacheL1.getMisses()<<endl
+      <<" Latency: "<<mCacheL1.getTotalLatency()<<endl<<" References: "<<mCacheL1.getReferences()<<endl;
   return 0;
 }

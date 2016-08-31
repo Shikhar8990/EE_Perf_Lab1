@@ -1,0 +1,4 @@
+L1 hit rate: 0.12
+Total latency: 5314
+L1 references: 60
+AMAT: 88.56
