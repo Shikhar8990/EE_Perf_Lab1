@@ -8,6 +8,7 @@
 #include <deque>
 #include "CacheLine.h"
 
+
 using namespace std;
 
 class BaseCache {
@@ -29,11 +30,11 @@ class BaseCache {
     int  getWaytoAllocate(long long inAddr);
     int  getSet(long long inAddr);
     long long getTag(long long inAddr);
-    int  getTotalReferences() { return (mRead_Reqs+mWrite_Reqs); }
-    int  getMisses() { return mMisses; }
-    int  getTotalLatency() { return mLatency; }
-    int  getHits() { return mHits; }
-    int  getReferences() { return mReferences; }
+    long int  getTotalReferences() { return (mRead_Reqs+mWrite_Reqs); }
+    long int  getMisses() { return mMisses; }
+    long int  getTotalLatency() { return mLatency; }
+    long int  getHits() { return mHits; }
+    long int  getReferences() { return mReferences; }
     struct reloadPkt {
       long long tag;
       long long addr;
@@ -44,6 +45,7 @@ class BaseCache {
       int dirty;
     };
   private:  
+    bool g_Debug;
     CacheLine **mCache;
     int mAssoc;
     int mSets;
@@ -55,12 +57,12 @@ class BaseCache {
     int mTagBits;
     int mMemLat;
     int mHitLat;
-    int mRead_Reqs;
-    int mWrite_Reqs;
-    int mMisses;
-    int mHits;
-    int mLatency;
-    int mReferences;
+    long int mRead_Reqs;
+    long int mWrite_Reqs;
+    long int mMisses;
+    long int mHits;
+    long int mLatency;
+    long int mReferences;
     deque<reloadPkt> mActiveRld;
 };
 

@@ -5,6 +5,7 @@
 #include <string>
 #include <fstream>
 #include <sstream>
+#include <iomanip>
 #include "BaseCache.h"
 
 #define ADDR_SIZE 64
@@ -13,9 +14,10 @@
 
 using namespace std;
 
-int main() {
-  ifstream inFile("sample_config_test.cfg");
+int main(int argc, char **argv) {
+  ifstream inFile(argv[1]);
   string line;
+  bool g_Debug = false;
   BaseCache mCacheL1;
   while(getline(inFile, line)) {
     istringstream iss(line);
@@ -35,7 +37,7 @@ int main() {
     }
   }
   mCacheL1.init_Cache();
-  ifstream inFile1("sample_trace_test.trc");
+  ifstream inFile1(argv[2]);
   char *line_tr = NULL;
   while(getline(inFile1, line)) {
     int cnt=0, r_w=0;
@@ -56,16 +58,21 @@ int main() {
       }
       mCacheL1.processActiveReloads(cycle);
       if(r_w == 1) {
-        cout<<"Cyc:"<<hex<<cycle<<dec<<" Read Request for Addr:"<<hex<<addr<<dec<<endl; 
+        if(g_Debug) cout<<"Cyc:"<<hex<<cycle<<dec<<" Read Request for Addr:"<<hex<<addr<<dec<<endl; 
         mCacheL1.readAddr(addr, cycle);
       }
       else {
-        cout<<"Cyc:"<<hex<<cycle<<dec<<" Write Request for Addr:"<<hex<<addr<<dec<<endl; 
+        if(g_Debug) cout<<"Cyc:"<<hex<<cycle<<dec<<" Write Request for Addr:"<<hex<<addr<<dec<<endl; 
         mCacheL1.writeAddr(addr, cycle);
       }
     }
   }
-  cout<<" Results "<<endl<<" Hits: "<<mCacheL1.getHits()<<endl<<" Misses: "<<mCacheL1.getMisses()<<endl
-      <<" Latency: "<<mCacheL1.getTotalLatency()<<endl<<" References: "<<mCacheL1.getReferences()<<endl;
+  if(g_Debug) cout<<" Results "<<endl<<" Hits: "<<mCacheL1.getHits()<<endl<<" Misses: "
+                  <<mCacheL1.getMisses()<<endl<<" Latency: "<<mCacheL1.getTotalLatency()
+                  <<endl<<" References: "<<mCacheL1.getReferences()<<endl;
+  cout<<"L1 hit rate: "<<fixed<<setprecision(2)<<(float(mCacheL1.getHits())/(float(mCacheL1.getReferences())))<<endl
+      <<"Total latency: "<<mCacheL1.getTotalLatency()<<endl
+      <<"L1 references: "<<mCacheL1.getReferences()<<endl
+      <<"AMAT: "<<fixed<<setprecision(2)<<((float(mCacheL1.getTotalLatency()))/(float(mCacheL1.getReferences())))<<endl;
   return 0;
 }

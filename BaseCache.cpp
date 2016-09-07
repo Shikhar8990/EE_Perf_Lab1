@@ -21,6 +21,7 @@ BaseCache::BaseCache() {
   mHits       = 0;
   mReferences = 0;
   mActiveRld.clear();
+  g_Debug = false;
 } 
 
 void BaseCache::init_Cache() {
@@ -29,14 +30,14 @@ void BaseCache::init_Cache() {
   mSets = sets;
   mBlockOffet = log2(mBlock_size);
   mIndexBits = log2(mSets);
-  cout<<"Cache Parms "<<endl<<" Block Size" <<mBlock_size<<endl<<" Cache Size "<<mCache_size<<endl
+  if(g_Debug) cout<<"Cache Parms "<<endl<<" Block Size" <<mBlock_size<<endl<<" Cache Size "<<mCache_size<<endl
       <<" Assoc "<<mAssoc<<endl<<" Number of Lines "<<blocks<<endl<<" Sets "<<sets<<endl
       <<" BLock offset "<<mBlockOffet<<endl<<" index bits "<<mIndexBits<<endl;
-  cout<<"Mem Latency :"<<mMemLat<<endl;
+  if(g_Debug) cout<<"Mem Latency :"<<mMemLat<<endl;
   for(int x=0; x<mIndexBits;x++) {
     mIndexMask = (mIndexMask<<1)|1;
   }
-  cout<<" Index Mask "<<mIndexMask<<endl;
+  if(g_Debug) cout<<" Index Mask "<<mIndexMask<<endl;
   mCache = (CacheLine **)malloc(sets*sizeof(CacheLine *));
   for(int set=0; set<sets; set++) {
     mCache[set] = (CacheLine *)malloc(mAssoc*sizeof(CacheLine));
@@ -54,11 +55,11 @@ void BaseCache::readAddr(long long inAddr, long inCyc) {
   int way=0, set=0, valid=0;
   mReferences++;
   if(searchTag(inAddr, set, way)) {
-    cout<<" Cache hit 0x"<<hex<<inAddr<<dec<<endl;
+    if(g_Debug) cout<<" Cache hit 0x"<<hex<<inAddr<<dec<<endl;
     mHits++;
     mLatency+=mHitLat;
   } else {
-    cout<<" Cache miss 0x"<<hex<<inAddr<<dec<<endl;
+    if(g_Debug) cout<<" Cache miss 0x"<<hex<<inAddr<<dec<<endl;
     way = getWaytoAllocate(inAddr);
     set = getSet(inAddr);
     mMisses++;
@@ -73,12 +74,12 @@ void BaseCache::writeAddr(long long inAddr, long inCyc) {
   int way=0, set=0, valid=0;
   mReferences++;
   if(searchTag(inAddr, set, way)) { //hit
-    cout<<" Cache hit 0x"<<hex<<inAddr<<dec<<endl;
+    if(g_Debug) cout<<" Cache hit 0x"<<hex<<inAddr<<dec<<endl;
     mHits++;
     mLatency+=mHitLat;
     mCache[set][way].setDirty();
   } else {
-    cout<<" Cache miss 0x"<<hex<<inAddr<<dec<<endl;
+    if(g_Debug) cout<<" Cache miss 0x"<<hex<<inAddr<<dec<<endl;
     way = getWaytoAllocate(inAddr); 
     set = getSet(inAddr);           
     mMisses++;
@@ -90,7 +91,7 @@ void BaseCache::writeAddr(long long inAddr, long inCyc) {
 }
 
 bool BaseCache::searchTag(long long inAddr, int &inSet, int &inWay) {
-  cout<<" Searching for Tag 0x"<<hex<<getTag(inAddr)<<dec<<endl;
+  if(g_Debug) cout<<" Searching for Tag 0x"<<hex<<getTag(inAddr)<<dec<<endl;
   inSet = getSet(inAddr);
   for(int way=0; way<mAssoc; way++) {
     if((getTag(inAddr) == mCache[inSet][way].getTag()) && (mCache[inSet][way].isValid())) {
@@ -111,7 +112,7 @@ void BaseCache::sendMemReq(long long inAddr, int inSet, int inWay, int inDirty, 
   pkt.cyc = inCyc;
   pkt.dirty = inDirty;
   mActiveRld.push_front(pkt);
-  cout<<" Mem Req for Addr: 0x"<<hex<<inAddr<<" Set: 0x"<<inSet<<" Way: 0x"<<inWay<<dec<<endl;
+  if(g_Debug) cout<<" Mem Req for Addr: 0x"<<hex<<inAddr<<" Set: 0x"<<inSet<<" Way: 0x"<<inWay<<dec<<endl;
 }
 
 void BaseCache::allocateLine(long long inAddr, long long inTag, int inSet, int inWay, int inDirty) {
@@ -120,25 +121,25 @@ void BaseCache::allocateLine(long long inAddr, long long inTag, int inSet, int i
   mCache[inSet][inWay].setValid();
   if(inDirty == 1) 
     mCache[inSet][inWay].setDirty();
-  cout<<" Cache Write: "<<hex<<" Addr 0x:"<<inAddr<<" Tag: 0x"<<inTag<<" Set: 0x"<<inSet
+  if(g_Debug) cout<<" Cache Write: "<<hex<<" Addr 0x:"<<inAddr<<" Tag: 0x"<<inTag<<" Set: 0x"<<inSet
       <<" Way: 0x"<<inWay<<" Dirty: "<<inDirty<<dec<<endl;
 }
 
 void BaseCache::processActiveReloads(long inCyc) {
 
-  cout<<"---------------------------------"<<endl;
-  cout<<" isEmpty "<<mActiveRld.empty()<<endl;
+  if(g_Debug) cout<<"---------------------------------"<<endl;
+  if(g_Debug) cout<<" isEmpty "<<mActiveRld.empty()<<endl;
   if(!mActiveRld.empty()) {
-    cout<<" HereA: Size "<<mActiveRld.size()<<endl;
+    if(g_Debug) cout<<" HereA: Size "<<mActiveRld.size()<<endl;
     deque<reloadPkt>::iterator it = mActiveRld.begin();
     deque<reloadPkt>::iterator temp;
 
     while((it != mActiveRld.end()) && (mActiveRld.size()!=0)) {
-      cout<<" Here Addr: 0x"<<hex<<it->addr<<dec<<endl;
-      cout<<" Here: Sent 0x"<<hex<<(it->cyc)<<" Write 0x"<<((it->cyc)+(mMemLat))<<" Curr cyc: 0x"<<inCyc<<dec<<endl;
+      if(g_Debug) cout<<" Here Addr: 0x"<<hex<<it->addr<<dec<<endl;
+      if(g_Debug) cout<<" Here: Sent 0x"<<hex<<(it->cyc)<<" Write 0x"<<((it->cyc)+(mMemLat))<<" Curr cyc: 0x"<<inCyc<<dec<<endl;
       if(((it->cyc)+long(mMemLat)) <= inCyc) {
         allocateLine(it->addr, it->tag, it->set, it->way, it->dirty);
-        cout<<" Here1: Erased 0x"<<hex<<it->tag<<dec<<endl;
+        if(g_Debug) cout<<" Here1: Erased 0x"<<hex<<it->tag<<dec<<endl;
         temp = it;
         ++temp;
         mActiveRld.erase(it);
